@@ -67,7 +67,6 @@ app.post('/api/login',(req, res)=> {
 function verifyToken(req, res, next){
     //Get auth header value
     const bearerHeader = req.headers['authorization'];
-    console.log(bearerHeader);
     if(typeof  bearerHeader !== 'undefined'){
         const bearer = bearerHeader.split(' ');
         const bearerToken = bearer[1];
@@ -106,14 +105,14 @@ app.get('/api/bureauenquete',verifyToken,(req, res)=>{
 
 });
 
-app.get('/api/session/getAll',verifyToken,(req, res)=>{
+app.get('/api/session/getAll/:id',verifyToken,(req, res)=>{
     jwt.verify(req.token, 'secretkey',(err, authData)=>{
         if(err){
             res.sendStatus(403);
         }
         else{
             if(Object.values(refreshTokens).includes(req.token)){
-                mysqlConnection.query("SELECT * FROM session",(err, rows, fields)=>{
+                mysqlConnection.query("SELECT id,nomSession,s.date,s.sujet,s.notes,s.Disp_prep,s.Cpt_Rd_Sess,a.id_Av,s.id_Aff FROM session s INNER JOIN affaire a ON s.id_Aff = a.num_Aff where a.id_Av = ? ORDER BY s.date DESC",[req.params.id],(err, rows, fields)=>{
                     if(!err){
                         res.setHeader('Content-Type', 'application/json');
                         res.send(rows);
@@ -132,14 +131,14 @@ app.get('/api/session/getAll',verifyToken,(req, res)=>{
 
 });
 
-app.get('/api/rendezvous/getAll',verifyToken,(req, res)=>{
+app.get('/api/rendezvous/getAll/:id',verifyToken,(req, res)=>{
     jwt.verify(req.token, 'secretkey',(err, authData)=>{
         if(err){
             res.sendStatus(403);
         }
         else{
             if(Object.values(refreshTokens).includes(req.token)){
-                mysqlConnection.query("SELECT * FROM rendezvous",(err, rows, fields)=>{
+                mysqlConnection.query("SELECT * FROM rendezvous where id_Av=? order by date DESC",[req.params.id],(err, rows, fields)=>{
                     if(!err){
                         res.setHeader('Content-Type', 'application/json');
                         res.send(rows);
@@ -159,14 +158,14 @@ app.get('/api/rendezvous/getAll',verifyToken,(req, res)=>{
 });
 
 
-app.get('/api/mission/getAll',verifyToken,(req, res)=>{
+app.get('/api/mission/getAll/:id',verifyToken,(req, res)=>{
     jwt.verify(req.token, 'secretkey',(err, authData)=>{
         if(err){
             res.sendStatus(403);
         }
         else{
             if(Object.values(refreshTokens).includes(req.token)){
-                mysqlConnection.query("SELECT * FROM mission",(err, rows, fields)=>{
+                mysqlConnection.query("SELECT id,nomMission,m.date ,duree,partieConcernee,adressePartieC,type,requis,notes, m.id_Aff FROM mission m , affaire a WHERE m.id_Aff = a.num_Aff and a.id_Av=? ORDER by m.date DESC",[req.params.id],(err, rows, fields)=>{
                     if(!err){
                         res.setHeader('Content-Type', 'application/json');
                         res.send( rows );
@@ -185,4 +184,80 @@ app.get('/api/mission/getAll',verifyToken,(req, res)=>{
 
 });
 
+app.get('/api/Affaire/getAll/:id',verifyToken,(req, res)=>{
+    jwt.verify(req.token, 'secretkey',(err, authData)=>{
+        if(err){
+            res.sendStatus(403);
+        }
+        else{
+            if(Object.values(refreshTokens).includes(req.token)){
+
+                mysqlConnection.query("SELECT num_Aff,t1.degre,sujet,date,etat,id_Clt,id_Crl,id_Av,num_Cas_Prec,num_Av_Cont,etat_Av_Cont,nomAff,t2.degre cercle FROM Affaire t1 INNER JOIN cercle t2 ON t1.id_Crl = t2.id where id_Av = ?",[req.params.id],(err, rows, fields)=>{
+                    if(!err){
+                        res.setHeader('Content-Type', 'application/json');
+                        res.send( rows );
+                    }
+                    else{
+                        res.setHeader('Content-Type', 'application/json');
+                        res.send([]);
+                    }
+                });
+            }
+            else{
+                res.sendStatus(403);
+            }
+        }
+    });
+});
+
+app.get('/api/Client/getAll/:id',verifyToken,(req, res)=>{
+    jwt.verify(req.token, 'secretkey',(err, authData)=>{
+        if(err){
+            res.sendStatus(403);
+        }
+        else{
+            if(Object.values(refreshTokens).includes(req.token)){
+
+                mysqlConnection.query("SELECT * from client where id_Av = ?",[req.params.id],(err, rows, fields)=>{
+                    if(!err){
+                        res.setHeader('Content-Type', 'application/json');
+                        res.send( rows );
+                    }
+                    else{
+                        res.setHeader('Content-Type', 'application/json');
+                        res.send([]);
+                    }
+                });
+            }
+            else{
+                res.sendStatus(403);
+            }
+        }
+    });
+});
+
+app.post('/api/Session/AddSession',verifyToken,(req, res)=> {
+    jwt.verify(req.token, 'secretkey',(err, authData)=>{
+        if(err){
+            res.sendStatus(403);
+        }
+        else{
+            if(Object.values(refreshTokens).includes(req.token)){
+                mysqlConnection.query("INSERT INTO session (nomSession,date,sujet,notes,Disp_prep,Cpt_Rd_Sess,id_Aff) VALUES (?,?,?,?,?,?,?)",[req.body.nomSession,req.body.date,req.body.sujet,req.body.notes,req.body.Disp_prep,req.body.Cpt_Rd_Sess,req.body.id_Aff],(err, rows, fields)=>{
+                    if(!err){
+                        res.setHeader('Content-Type', 'application/json');
+                        res.send("succes");
+                    }
+                    else{
+                        res.setHeader('Content-Type', 'application/json');
+                        res.send("failed");
+                    }
+                });
+            }
+            else{
+                res.sendStatus(403);
+            }
+        }
+    });
+});
 
