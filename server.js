@@ -304,7 +304,7 @@ app.get('/api/session/getAll/:id',verifyToken,(req, res)=>{
         }
         else{
             if(Object.values(refreshTokens).includes(req.token)){
-                mysqlConnection.query("SELECT id,nomSession,s.date,s.sujet,s.notes,s.Disp_prep,s.Cpt_Rd_Sess,a.id_Av,s.id_Aff FROM session s INNER JOIN affaire a ON s.id_Aff = a.num_Aff where a.id_Av = ? ORDER BY s.date DESC",[req.params.id],(err, rows, fields)=>{
+                mysqlConnection.query("SELECT id,nomSession,s.date,s.sujet,s.notes,s.Disp_prep,s.Cpt_Rd_Sess,a.id_Av,s.id_Aff FROM session s INNER JOIN affaire a ON s.id_Aff = a.num_Aff where a.id_Av = ? and s.status = 'oui' ORDER BY s.date DESC",[req.params.id],(err, rows, fields)=>{
                     if(!err){
                         res.setHeader('Content-Type', 'application/json');
                         res.send(rows);
@@ -443,7 +443,7 @@ app.get('/api/mission/getAll/:id',verifyToken,(req, res)=>{
         }
         else{
             if(Object.values(refreshTokens).includes(req.token)){
-                mysqlConnection.query("SELECT id,nomMission,m.date ,duree,partieConcernee,adressePartieC,type,requis,notes, id_Aff FROM mission m , affaire a WHERE m.id_Aff = a.num_Aff and a.id_Av=? ORDER by m.date DESC",[req.params.id],(err, rows, fields)=>{
+                mysqlConnection.query("SELECT id,nomMission,m.date ,duree,partieConcernee,adressePartieC,type,requis,notes, id_Aff FROM mission m , affaire a WHERE m.id_Aff = a.num_Aff and a.id_Av=? and m.status = 'oui' ORDER by m.date DESC",[req.params.id],(err, rows, fields)=>{
                     if(!err){
                         res.setHeader('Content-Type', 'application/json');
                         res.send( rows );
